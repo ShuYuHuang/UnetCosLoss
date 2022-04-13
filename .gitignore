@@ -1,0 +1,10 @@
+runs/
+data/
+snapshots/
+checkpoints/
+__pycache__/
+*.pth
+*DS_Store
+*.sh
+**.ipynb_checkpoints
+*egg-info
