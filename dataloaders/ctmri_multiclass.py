@@ -69,6 +69,31 @@ class CTMRI_MultiClassDataset(tud.Dataset):
         mask=mapping(mask)
         return image,mask
 
+class CTMRI_InferenceDataset(tud.Dataset):
+    def __init__(self,anno_file,
+                 root_dir,
+                 test_transform=None):
+        
+        self.root_dir=root_dir
+        self.test_transform=test_transform
+        self.coco_obj=COCO(anno_file)
+        self.element=self.coco_obj.imgs
+        self.n_cats=len(self.coco_obj.cats)
+        self.cat_ids=list(self.coco_obj.cats.keys())
+    def __len__(self) -> int:
+        return len(self.element)
+    def __getitem__(self,id):
+        img_obj=self.element[id]
+        transform=self.test_transform
+        # Read dcm to image
+        image = load_dcm(join(self.root_dir,img_obj['file_name']))
+        # Albumentation
+        if transform:
+            transformed = transform(image=image)
+            image= transformed['image']
+        # Image preparation    
+        image = image[np.newaxis,...].repeat(3,axis=0)
+        return image
 
 ## Dataset info
 # === CT Sets ===
