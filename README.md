@@ -1,12 +1,17 @@
 # UnetCosLoss
-Cosine loss used in output of Unet for few shot semantic segmentation
+🔥Cosine loss used in output of Unet for few-shot semantic segmentation
 
 ## Dataset:
-for kaggle competition: https://www.kaggle.com/competitions/aia-chaos-class-obdet
+* 🔥For kaggle competition: https://www.kaggle.com/competitions/aia-chaos-class-obdet
 ```
 # Dataset with auxilary labels (torsal segmentation, marked as "trunk"), and annotation files
 gdown https://drive.google.com/u/0/uc?id=1xgzM-eFbFprpaLEKvw9eTBAwVpS-xWRh&export=download
+```
+* Test files are not included, please see ["Data Description
+"](https://www.kaggle.com/competitions/aia-chaos-class-obdet-da/data) in the competition webpage
 
+* Structure of the dataset
+```
 root
 |- CT
 |   |-annotations
@@ -44,11 +49,16 @@ root
 #              |-DICOM_anon
 #                  |-*.dcm
 ```
+## Requirements:
+Required repos are in requirements.txt, install with:
+```
+bash setup.sh
+```
 
 ## Let's Train the Model:
-```
-Try_Training.ipynb: Training processes of source dataset and target dataset
-```
+* Training: Try_Training.ipynb- Training processes of source dataset and target dataset
+* Submission(for kaggle contest): Try_Submission.ipynb- running length encoding for submission
+* Other things are explained below
 
 ## Data loader
 ```
