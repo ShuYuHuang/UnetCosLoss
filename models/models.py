@@ -7,6 +7,7 @@ class SegModel(nn.Module):
         self.backbone=backbone
         self.head=head
         self.output_sizes=output_sizes
+        
     def forward(self,data,label=None):
         # Transfer Learing: backbone+ output head
         hidden=self.backbone(data)
@@ -15,4 +16,5 @@ class SegModel(nn.Module):
             logits = F.interpolate(features, size=label.shape[-2:], mode='bilinear')
         else:
             logits = F.interpolate(features, size=self.output_sizes, mode='bilinear')
+        
         return logits

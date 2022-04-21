@@ -13,17 +13,30 @@ from pydicom import dcmread
 def load_dcm(fname):
     ds=dcmread(fname).pixel_array
     # 調整格式以配合albumentation套件需求
-    return ds.astype('uint8')
+    return ds.astype('uint32')
 def load_msk(fname):
     msk = cv2.imread(fname)[...,0]
     # 調整格式以配合albumentation套件需求
-    return msk.astype('uint8')
+    return msk.astype('uint32')
 def occr_in_ds(ds):
     rate_pos=np.count_nonzero(ds[0][1])/np.prod(ds[0][1].shape)
     cat_counts=[len(ds.coco_obj.getAnnIds(catIds=i)) for i in ds.cat_ids]
     occr_rate=[1-rate_pos]+[*map(lambda x:x*rate_pos/sum(cat_counts),cat_counts)]
     return occr_rate
 ### Dataset
+## Mapping for IDs can be customized for label filtering
+ID_MAPPING={0:0,
+            32:1,
+            63:2,
+            126:1,
+            189:1,
+            252:1}
+# ID_MAPPING={0:0,
+#             32:1,
+#             63:2,
+#             126:3,
+#             189:4,
+#             252:5}
 class CTMRI_MultiClassDataset(tud.Dataset):
     def __init__(self,anno_file,
                  root_dir,
@@ -65,7 +78,8 @@ class CTMRI_MultiClassDataset(tud.Dataset):
         # Image preparation    
         image = image[np.newaxis,...].repeat(3,axis=0)
         # Mask preparation
-        mapping=np.vectorize(lambda x: ([0]+self.cat_ids).index(x))
+        
+        mapping=np.vectorize(lambda x:ID_MAPPING[x])
         mask=mapping(mask)
         return image,mask
 
@@ -91,10 +105,38 @@ class CTMRI_InferenceDataset(tud.Dataset):
         if transform:
             transformed = transform(image=image)
             image= transformed['image']
-        # Image preparation    
+        # Image preparation
         image = image[np.newaxis,...].repeat(3,axis=0)
         return image
 
+class CTMRI_SSLDataset(tud.Dataset):
+    def __init__(self,anno_file,
+                 root_dir,
+                 transform,
+                 test_transform):
+        
+        self.root_dir=root_dir
+        
+        self.transform=transform
+        self.test_transform=test_transform
+        
+        self.coco_obj=COCO(anno_file)
+        self.element=self.coco_obj.imgs
+        self.n_cats=len(self.coco_obj.cats)
+        self.cat_ids=list(self.coco_obj.cats.keys())
+    def __len__(self) -> int:
+        return len(self.element)
+    def __getitem__(self,id):
+        img_obj=self.element[id]
+        # Read dcm to image
+        image = load_dcm(join(self.root_dir,img_obj['file_name']))
+        # Albumentation
+        image_us= self.transform(image=image)['image']
+        image_uw= self.test_transform(image=image)['image']
+        # Image preparation
+        image_us = image_us[np.newaxis,...].repeat(3,axis=0)
+        image_uw = image_uw[np.newaxis,...].repeat(3,axis=0)
+        return image_us,image_uw
 ## Dataset info
 # === CT Sets ===
 # --All labels of CT sets were reviewed. Some ground truth data might be slightly different from the first published set. Please use the last version of the sets.

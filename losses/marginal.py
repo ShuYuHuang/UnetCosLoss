@@ -1,20 +1,7 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
-
-class FocalLoss(nn.Module):
-    def __init__(self, gamma=2, eps=1e-10,*args,**kwargs):
-        super().__init__()
-        self.gamma = gamma
-        self.eps = torch.tensor(eps,dtype=torch.float32)
-        self.ce = nn.CrossEntropyLoss(*args,**kwargs)
-    def forward(self,  y_pred,y_true):
-        # 計算cross entropy
-        logp = self.ce(y_pred+self.eps, y_true)
-        # 計算乘上gamma次方後的entropy反方機率(將對比放大)
-        p = torch.exp(-logp)
-        loss = (1 - p) ** self.gamma * logp
-        return loss.mean()
+from .focal import FocalLoss
 
 class AddMarginLoss(nn.Module):
     def __init__(self,ways, s=15.0, m=0.40,loss_fn=FocalLoss,*args,**kwargs):

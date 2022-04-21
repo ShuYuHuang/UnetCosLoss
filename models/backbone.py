@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 import torchvision
 
-
+## Unit Block
 class convBlock(nn.Module):
     def __init__(self, in_ch, out_ch, padding = 'same', kernel_size=3):
         super().__init__()
@@ -36,18 +36,15 @@ class UpSampleConvs(nn.Module):
         
     def forward(self, x):
         x = self.upSample(x)
-#         x = self.relu(x)
         x = self.conv(x)
         x = self.Norm(x)
         x = self.relu(x)
-#         return self.relu(self.conv2(self.relu(self.upSample(x))))
         return x
 
 class Encoder(nn.Module):
     def __init__(self, chs=(3,32,64,128,256,512), padding='same'):
         super().__init__()
         self.FPN_enc_ftrs = nn.ModuleList([convBlock(chs[i], chs[i+1], padding) for i in range(len(chs)-1)])
-#         self.pool = nn.MaxPool2d(2)
         self.pool = torch.max_pool2d
         
     def forward(self, x):
@@ -56,10 +53,10 @@ class Encoder(nn.Module):
         for block in self.FPN_enc_ftrs:
             x = block(x)
             features.append(x)
-#             print(x.shape)
             x = self.pool(x, kernel_size=2)
         return features
 
+## Submodules
 class Decoder(nn.Module):
     def __init__(self, chs=(512, 256, 128, 64, 32), padding='same'):
         super().__init__()
@@ -85,6 +82,7 @@ class Decoder(nn.Module):
         enc_ftrs   = torchvision.transforms.CenterCrop([H, W])(enc_ftrs)
         return enc_ftrs
 
+# Model
 class UNet(nn.Module):
     def __init__(self,
                  input_chs=3,
